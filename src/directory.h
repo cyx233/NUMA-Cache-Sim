@@ -3,7 +3,7 @@
 #include <cassert>
 #include <unordered_map>
 #include <vector>
-#include "node_interface.h"
+#include "numa_node.h"
 #include "protocols.h"
 
 enum class DirectoryState
