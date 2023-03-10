@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <cassert>
 #include <unordered_map>
 #include <vector>
@@ -8,9 +9,9 @@
 
 enum class DirectoryState
 {
-    U = 0, // uncached - no caches have valid copy
-    S = 1, // shared - at least one cache has data
-    EM = 2 // exclusive / modified - one cache owns it
+    U = 0,  // uncached - no caches have valid copy
+    SO = 1, // shared - at least one cache has data
+    EM = 2  // exclusive / modified - one cache owns it
 };
 
 struct DirectoryLine
@@ -52,9 +53,8 @@ public:
     size_t getMemoryReads() const { return memory_reads_; }
 
 private:
-    long getAddr(size_t addr);
+    size_t getAddr(size_t addr);
     DirectoryLine *getLine(size_t addr);
-    int findOwnerEM(DirectoryLine *line);
     void invalidateSharers(DirectoryLine *line, int new_owner, size_t addr);
 
     int procs_;

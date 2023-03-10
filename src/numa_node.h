@@ -9,7 +9,7 @@ struct Addr;
 class NUMANode
 {
 public:
-    NUMANode(int numa_node, int num_numa_nodes, int num_procs, Directory *directory, std::vector<Cache> *caches);
+    NUMANode(int node_id_, int num_numa_nodes, int num_procs, Directory *directory, std::vector<Cache> *caches);
     ~NUMANode();
     void connectWith(NUMANode *node, int id);
 
@@ -18,27 +18,27 @@ public:
     void cacheWrite(int proc, size_t addr, int numa_node);
 
     // cache -> directory messages
-    void emitBusRd(int src, Addr address);
-    void emitBusRdX(int src, Addr address);
-    void emitData(int src, Addr address, bool is_dirty);
-    void emitEviction(int src, Addr address);
-    void emitBroadcast(int src, Addr address);
+    void receiveBusRd(int src, Addr address);
+    void receiveBusRdX(int src, Addr address);
+    void receiveData(int src, Addr address, bool is_dirty);
+    void receiveEviction(int src, Addr address);
+    void receiveBroadcast(int src, Addr address);
 
     // directory -> cache messages
-    void emitReadData(int dest, long addr, bool exclusive);
-    void emitWriteData(int dest, long addr);
-    void emitFetch(int dest, Addr address);
-    void emitInvalidate(int dest, long addr);
+    void sendReadData(int dest, long addr, bool exclusive);
+    void sendWriteData(int dest, long addr);
+    void sendFetch(int dest, Addr address);
+    void sendInvalidate(int dest, long addr);
 
     size_t getLocalEvents() { return directory_events_ + cache_events_; }
     size_t getGlobalEvents() { return global_events_; }
 
-    int getNumaNode();
+    int getID();
 
 private:
     int getNode(int dest);
 
-    int numa_node_;
+    int node_id_;
     int num_numa_nodes_;
     int num_procs_;
 

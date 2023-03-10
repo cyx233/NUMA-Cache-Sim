@@ -13,7 +13,7 @@ const int ADDR_LEN = 64;
 struct Addr
 {
     size_t addr;
-    uint32_t numa_node;
+    int numa_node;
 };
 
 enum class Protocol

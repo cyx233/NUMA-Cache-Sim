@@ -62,5 +62,5 @@ void VIBlock::fetch()
     flushes_ += 1;
     is_valid_ = false;
 };
-void VIBlock::receiveReadData([[maybe_unused]] bool exclusive) { is_valid_ = false; };
-void VIBlock::receiveWriteData() { is_valid_ = false; };
+void VIBlock::receiveReadData([[maybe_unused]] bool exclusive) { is_valid_ = true; };
+void VIBlock::receiveWriteData() { is_valid_ = true; };
