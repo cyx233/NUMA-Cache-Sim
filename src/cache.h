@@ -3,6 +3,7 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <cassert>
 
 #include "cache_block.h"
 #include "moesi_block.h"
@@ -10,10 +11,19 @@
 
 const int ADDR_LEN = 64;
 
+enum class DirectoryMsg
+{
+    READDATA_EX,
+    READDATA,
+    WRITEDATA,
+    FETCH,
+    INVALIDATE,
+};
+
 struct Addr
 {
     size_t addr;
-    int numa_node;
+    int node_id;
 };
 
 enum class Protocol
@@ -53,17 +63,14 @@ class Cache
 {
 public:
     // 2^index_len sets, 2^offset_len bytes per block and ways
-    Cache(int id, int numa_node, int index_len, int ways, int offset_len, Protocol protocol);
+    Cache(int id, int index_len, int ways, int offset_len, Protocol protocol);
 
     void cacheWrite(Addr addr);
     void cacheRead(Addr addr);
 
     void assignToNode(NUMANode *node);
 
-    void receiveInvalidate(size_t addr);
-    void receiveFetch(Addr addr);
-    void receiveReadData(size_t addr, bool exclusive);
-    void receiveWriteData(size_t addr);
+    void receiveMsg(size_t addr, DirectoryMsg msg, int request_node_id);
 
     int getID() const;
     void printConfig() const;
@@ -78,7 +85,7 @@ private:
     CacheBlock *findInSet(size_t tag, size_t index);
 
     void evictAndReplace(size_t tag, size_t index, Addr addr, bool is_write);
-    void performMessage(Message msg, Addr addr);
+    void performMessage(CacheMsg msg, Addr addr);
     void sendEviction(size_t tag, size_t addr, int numa_node);
 
     int cache_id_;

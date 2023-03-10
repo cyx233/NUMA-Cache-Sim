@@ -2,39 +2,39 @@
 
 VIBlock::VIBlock() : CacheBlock(){};
 
-Message VIBlock::updateState(bool is_write)
+CacheMsg VIBlock::updateState(bool is_write)
 {
     if (is_valid_)
     {
         hit_ += 1;
-        return Message::NOP;
+        return CacheMsg::NOP;
     }
     else
     {
         miss_ += 1;
         if (is_write)
-            return Message::BUSRDX;
+            return CacheMsg::BUSRDX;
         else
-            return Message::BUSRD;
+            return CacheMsg::BUSRD;
     }
 };
 
 bool VIBlock::isValid() { return is_valid_; };
-Message VIBlock::writeBlock(int numa_node)
+CacheMsg VIBlock::writeBlock(int node_id)
 {
     lru_cnt_ = 0;
     dirty_ = true;
-    numa_node_ = numa_node;
+    node_id_ = node_id;
     return updateState(true);
 };
-Message VIBlock::readBlock(int numa_node)
+CacheMsg VIBlock::readBlock(int node_id)
 {
     lru_cnt_ = 0;
-    numa_node_ = numa_node;
+    node_id_ = node_id;
     return updateState(false);
 };
 
-Message VIBlock::evictAndReplace(bool is_write, size_t tag, int new_node)
+CacheMsg VIBlock::evictAndReplace(bool is_write, size_t tag, int new_node)
 {
     if (dirty_)
     {
@@ -46,7 +46,7 @@ Message VIBlock::evictAndReplace(bool is_write, size_t tag, int new_node)
     tag_ = tag;
     dirty_ = is_write;
     lru_cnt_ = 0;
-    numa_node_ = new_node;
+    node_id_ = new_node;
     is_valid_ = false;
 
     return updateState(is_write);

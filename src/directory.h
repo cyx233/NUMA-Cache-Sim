@@ -1,11 +1,13 @@
 #pragma once
 
 #include <algorithm>
-#include <cassert>
 #include <unordered_map>
 #include <vector>
-#include "numa_node.h"
 #include "protocols.h"
+#include "cache.h"
+
+class NUMANode;
+
 
 enum class DirectoryState
 {
@@ -44,6 +46,8 @@ public:
     void cacheWrite(int proc, size_t addr, int numa_node);
 
     // cache -> directory messages
+    void receiveMsg(int cache_id, size_t addr, CacheMsg msg_type, bool is_dirty);
+
     void receiveBusRd(int cache_id, size_t addr);
     void receiveBusRdX(int cache_id, size_t addr);
     void receiveEviction(int cache_id, size_t addr);

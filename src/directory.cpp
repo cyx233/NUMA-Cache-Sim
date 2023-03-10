@@ -1,4 +1,5 @@
 #include "directory.h"
+#include "numa_node.h"
 
 DirectoryLine *Directory::getLine(size_t addr)
 {
@@ -16,6 +17,31 @@ size_t Directory::getAddr(size_t addr) { return addr & ~((1L << block_offset_bit
 
 void Directory::assignToNode(NUMANode *node) { numa_node_ = node; }
 
+void Directory::receiveMsg(int cache_id, size_t addr, CacheMsg msg_type, bool is_dirty)
+{
+  switch (msg_type)
+  {
+  case CacheMsg::BUSRD:
+    receiveBusRd(cache_id, addr);
+    break;
+  case CacheMsg::BUSRDX:
+    receiveBusRdX(cache_id, addr);
+    break;
+  case CacheMsg::EVICTION:
+    receiveEviction(cache_id, addr);
+    break;
+    break;
+  case CacheMsg::DATA:
+    receiveData(cache_id, addr, is_dirty);
+    break;
+  case CacheMsg::BROADCAST:
+    receiveBroadcast(cache_id, addr);
+    break;
+  case CacheMsg::NOP:
+    break;
+  }
+}
+
 void Directory::invalidateSharers(DirectoryLine *line, int new_owner, size_t addr)
 {
   assert(line->state_ == DirectoryState::SO);
@@ -24,7 +50,7 @@ void Directory::invalidateSharers(DirectoryLine *line, int new_owner, size_t add
   {
     if (line->presence_[i] && i != new_owner)
     {
-      numa_node_->sendInvalidate(i, addr);
+      numa_node_->emitDirectoryMsg(i, addr, DirectoryMsg::INVALIDATE);
       line->presence_[i] = false;
     }
   }
@@ -43,7 +69,7 @@ void Directory::receiveBroadcast(int cache_id, size_t addr)
   DirectoryLine *line = getLine(addr);
   for (size_t i = 0; i < line->presence_.size(); ++i)
     if (line->presence_[i] && i != (size_t)cache_id)
-      numa_node_->sendReadData(i, addr, false);
+      numa_node_->emitDirectoryMsg(i, addr, DirectoryMsg::READDATA);
 }
 
 void Directory::receiveEviction(int cache_id, size_t addr)
@@ -82,7 +108,7 @@ void Directory::receiveBusRd(int cache_id, size_t addr)
   {
   case DirectoryState::U:
     memory_reads_++;
-    numa_node_->sendReadData(cache_id, addr, true);
+    numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA_EX);
     line->presence_[cache_id] = true;
     line->owner_ = cache_id;
     line->state_ = protocol_ == Protocol::MSI ? DirectoryState::SO
@@ -90,18 +116,17 @@ void Directory::receiveBusRd(int cache_id, size_t addr)
     break;
   case DirectoryState::SO:
     if (line->owner_ != -1)
-      numa_node_->sendFetch(line->owner_, {addr, numa_node_->getID()});
+      numa_node_->emitDirectoryMsg(line->owner_, addr, DirectoryMsg::FETCH, numa_node_->getID());
     else
       memory_reads_++;
-    numa_node_->sendReadData(cache_id, addr, false);
+    numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA);
     line->presence_[cache_id] = true;
     break;
   case DirectoryState::EM:
-    // downgrade the owner and get him to flush or transition to O, now in shared state
-    numa_node_->sendFetch(line->owner_, {addr, numa_node_->getID()});
+    numa_node_->emitDirectoryMsg(line->owner_, addr, DirectoryMsg::FETCH, numa_node_->getID());
 
     line->presence_[cache_id] = true;
-    numa_node_->sendReadData(cache_id, addr, false);
+    numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA);
 
     line->state_ = DirectoryState::SO;
     break;
@@ -116,21 +141,21 @@ void Directory::receiveBusRdX(int cache_id, size_t addr)
   {
   case DirectoryState::U:
     memory_reads_++;
-    numa_node_->sendWriteData(cache_id, addr);
+    numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::WRITEDATA);
     break;
   case DirectoryState::SO:
     invalidateSharers(line, cache_id, addr);
     memory_reads_++;
-    numa_node_->sendWriteData(cache_id, addr);
+    numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::WRITEDATA);
     break;
   case DirectoryState::EM:
     int owner_id = line->owner_;
-    numa_node_->sendFetch(owner_id, {addr, numa_node_->getID()});
-    numa_node_->sendInvalidate(owner_id, addr);
+    numa_node_->emitDirectoryMsg(owner_id, addr, DirectoryMsg::FETCH, numa_node_->getID());
+    numa_node_->emitDirectoryMsg(owner_id, addr, DirectoryMsg::INVALIDATE);
 
     line->presence_[owner_id] = false;
 
-    numa_node_->sendWriteData(cache_id, addr);
+    numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::WRITEDATA);
     break;
   }
   line->presence_[cache_id] = true;

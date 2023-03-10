@@ -1,6 +1,7 @@
 #include "cache.h"
+#include "numa_node.h"
 
-Cache::Cache(int id, int numa_node, int index_len, int ways, int offset_len, Protocol protocol)
+Cache::Cache(int id, int index_len, int ways, int offset_len, Protocol protocol)
     : cache_id_(id),
       index_len_(index_len),
       set_size_(1 << index_len),
@@ -27,10 +28,22 @@ void Cache::assignToNode(NUMANode *node)
     numa_node_ = node;
 };
 
-void Cache::receiveInvalidate(size_t addr){};
-void Cache::receiveFetch(Addr addr){};
-void Cache::receiveReadData(size_t addr, bool exclusive){};
-void Cache::receiveWriteData(size_t addr){};
+void Cache::receiveMsg(size_t addr, DirectoryMsg msg, int request_node_id)
+{
+    switch (msg)
+    {
+    case DirectoryMsg::READDATA_EX:
+        break;
+    case DirectoryMsg::READDATA:
+        break;
+    case DirectoryMsg::WRITEDATA:
+        break;
+    case DirectoryMsg::FETCH:
+        break;
+    case DirectoryMsg::INVALIDATE:
+        break;
+    }
+}
 
 int Cache::getID() const
 {
@@ -94,30 +107,10 @@ void Cache::evictAndReplace(size_t tag, size_t index, Addr addr, bool is_write)
     }
 
     if ((*evict_block)->isValid())
-        sendEviction((*evict_block)->getTag(), addr.addr, (*evict_block)->getNumaNode());
-
-    Message msg = (*evict_block)->evictAndReplace(is_write, tag, addr.numa_node);
-    performMessage(msg, addr);
+        numa_node_->emitCacheMsg(cache_id_, {addr.addr, (*evict_block)->getNodeID()}, CacheMsg::EVICTION);
+    CacheMsg msg = (*evict_block)->evictAndReplace(is_write, tag, addr.node_id);
+    numa_node_->emitCacheMsg(cache_id_, addr, msg);
 };
-void Cache::performMessage(Message msg, Addr addr)
-{
-    if (numa_node_ == nullptr)
-        return;
-    switch (msg)
-    {
-    case Message::BUSRD:
-        break;
-    case Message::BUSRDX:
-        break;
-    case Message::BROADCAST:
-        break;
-    case Message::NOP:
-        break;
-    default:
-        break;
-    }
-};
-void Cache::sendEviction(size_t tag, size_t addr, int numa_node){};
 
 void Cache::printConfig() const
 {

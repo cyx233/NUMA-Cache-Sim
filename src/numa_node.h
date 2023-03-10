@@ -1,9 +1,10 @@
 #pragma once
-#include "cache.h"
 
 class Cache;
 class Directory;
+
 struct Addr;
+enum CacheMsg;
 
 // NUMA Node = Directory*1 + Processor(Cache)*N
 class NUMANode
@@ -18,17 +19,10 @@ public:
     void cacheWrite(int proc, size_t addr, int numa_node);
 
     // cache -> directory messages
-    void receiveBusRd(int src, Addr address);
-    void receiveBusRdX(int src, Addr address);
-    void receiveData(int src, Addr address, bool is_dirty);
-    void receiveEviction(int src, Addr address);
-    void receiveBroadcast(int src, Addr address);
+    void emitCacheMsg(int src, Addr addr, CacheMsg msg_type, bool is_dirty = false);
 
     // directory -> cache messages
-    void sendReadData(int dest, long addr, bool exclusive);
-    void sendWriteData(int dest, long addr);
-    void sendFetch(int dest, Addr address);
-    void sendInvalidate(int dest, long addr);
+    void emitDirectoryMsg(int dst, size_t addr, DirectoryMsg msg, int request_node_id = -1);
 
     size_t getLocalEvents() { return directory_events_ + cache_events_; }
     size_t getGlobalEvents() { return global_events_; }

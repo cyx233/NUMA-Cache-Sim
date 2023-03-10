@@ -1,12 +1,14 @@
 #pragma once
 #include <stddef.h>
 
-enum class Message
+enum class CacheMsg
 {
     NOP,
     BUSRD,
     BUSRDX,
-    BROADCAST
+    EVICTION,
+    DATA,
+    BROADCAST,
 };
 
 class CacheBlock
@@ -17,7 +19,7 @@ protected:
     size_t tag_;
     size_t lru_cnt_;
 
-    int numa_node_;
+    int node_id_;
 
     // metrics
     size_t flushes_;
@@ -27,7 +29,7 @@ protected:
     size_t evictions_;
     size_t dirty_evictions_;
 
-    virtual Message updateState(bool is_write) = 0;
+    virtual CacheMsg updateState(bool is_write) = 0;
 
 public:
     CacheBlock()
@@ -48,11 +50,11 @@ public:
     size_t getLruCnt() const { return lru_cnt_; }
     size_t getTag() const { return tag_; }
     void incrLruCnt() { lru_cnt_++; }
-    int getNumaNode() { return numa_node_; }
+    int getNodeID() { return node_id_; }
 
-    virtual Message writeBlock(int numa_node) = 0;
-    virtual Message readBlock(int numa_node) = 0;
-    virtual Message evictAndReplace(bool is_write, size_t tag, int new_node) = 0;
+    virtual CacheMsg writeBlock(int node_id) = 0;
+    virtual CacheMsg readBlock(int node_id) = 0;
+    virtual CacheMsg evictAndReplace(bool is_write, size_t tag, int new_node) = 0;
 
     virtual void invalidate() = 0;
     virtual void fetch() = 0; // fetch a line, send it to main memory if dirty_ == true
