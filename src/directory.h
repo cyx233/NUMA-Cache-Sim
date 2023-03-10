@@ -38,7 +38,7 @@ public:
             delete line;
     }
 
-    void assignToNode(NodeInterface *interface);
+    void assignToNode(NUMANode *interface);
     void cacheRead(int proc, size_t addr, int numa_node);
     void cacheWrite(int proc, size_t addr, int numa_node);
 
@@ -63,5 +63,5 @@ private:
     size_t memory_reads_;
     std::unordered_map<size_t, DirectoryLine *> directory_;
 
-    NodeInterface *node_interface_;
+    NUMANode *numa_node_;
 };
