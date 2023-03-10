@@ -47,7 +47,7 @@ struct CacheStats
            dirty_evictions_ = 0, memory_writes_ = 0;
 };
 
-class Interconnect;
+class NUMANode;
 
 class Cache
 {
@@ -58,7 +58,7 @@ public:
     void cacheWrite(Addr addr);
     void cacheRead(Addr addr);
 
-    void setInterconnect(Interconnect *interconnect);
+    void assignToNode(NUMANode *node);
 
     void receiveInvalidate(size_t addr);
     void receiveFetch(Addr addr);
@@ -82,7 +82,6 @@ private:
     void sendEviction(size_t tag, size_t addr, int numa_node);
 
     int cache_id_;
-    int numa_node_;
     int index_len_;
     int set_size_;
     int ways_;
@@ -90,6 +89,6 @@ private:
     int line_size_;
     Protocol protocol_;
 
-    Interconnect *interconnect_;
+    NUMANode *numa_node_;
     std::vector<std::shared_ptr<Set>> sets_;
 };

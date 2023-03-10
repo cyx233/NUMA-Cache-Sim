@@ -2,7 +2,6 @@
 
 Cache::Cache(int id, int numa_node, int index_len, int ways, int offset_len, Protocol protocol)
     : cache_id_(id),
-      numa_node_(numa_node),
       index_len_(index_len),
       set_size_(1 << index_len),
       ways_(ways),
@@ -23,9 +22,9 @@ void Cache::cacheRead(Addr addr)
     return performOperation(addr, false);
 };
 
-void Cache::setInterconnect(Interconnect *interconnect)
+void Cache::assignToNode(NUMANode *node)
 {
-    interconnect_ = interconnect;
+    numa_node_ = node;
 };
 
 void Cache::receiveInvalidate(size_t addr){};
@@ -102,7 +101,7 @@ void Cache::evictAndReplace(size_t tag, size_t index, Addr addr, bool is_write)
 };
 void Cache::performMessage(Message msg, Addr addr)
 {
-    if (interconnect_ == nullptr)
+    if (numa_node_ == nullptr)
         return;
     switch (msg)
     {
