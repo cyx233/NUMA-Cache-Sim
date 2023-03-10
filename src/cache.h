@@ -1,12 +1,14 @@
 #pragma once
 
-#include <algorithm>
 #include <iostream>
 #include <memory>
 #include <vector>
 
 #include "cache_block.h"
 #include "moesi_block.h"
+#include "vi_block.h"
+
+const int ADDR_LEN = 64;
 
 struct Addr
 {
@@ -29,14 +31,20 @@ struct Set
             switch (proto)
             {
             case Protocol::MOESI:
-                blocks_.push_back(new MOESIBlock);
                 break;
             default:
+                blocks_.push_back(new VIBlock);
                 break;
             }
         }
     };
     std::vector<CacheBlock *> blocks_;
+};
+
+struct CacheStats
+{
+    size_t hits_ = 0, misses_ = 0, flushes_ = 0, invalidations_ = 0, evictions_ = 0,
+           dirty_evictions_ = 0, memory_writes_ = 0;
 };
 
 class Interconnect;
@@ -50,7 +58,7 @@ public:
     void cacheWrite(Addr addr);
     void cacheRead(Addr addr);
 
-    void receiveMsg(Interconnect *interconnect);
+    void setInterconnect(Interconnect *interconnect);
 
     void receiveInvalidate(size_t addr);
     void receiveFetch(Addr addr);
@@ -58,13 +66,16 @@ public:
     void receiveWriteData(size_t addr);
 
     int getID() const;
+    void printConfig() const;
+    CacheStats getStats() const;
+    void printState() const;
 
 private:
     void performOperation(Addr address, bool is_write);
 
     CacheBlock *readCache(size_t addr);
-    std::pair<size_t, size_t> splitAddr(size_t addr); // tag & set
-    CacheBlock *findInSet(size_t tag, size_t set);
+    std::pair<size_t, size_t> splitAddr(size_t addr); // tag & set index
+    CacheBlock *findInSet(size_t tag, size_t index);
 
     void evictAndReplace(size_t tag, size_t index, Addr addr, bool is_write);
     void performMessage(Message msg, Addr addr);
@@ -73,7 +84,7 @@ private:
     int cache_id_;
     int numa_node_;
     int index_len_;
-    int totSets_;
+    int set_size_;
     int ways_;
     int offset_len_;
     int line_size_;

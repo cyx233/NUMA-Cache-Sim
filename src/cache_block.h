@@ -6,12 +6,12 @@ enum class Message
     NOP,
     BUSRD,
     BUSRDX,
-    BRODCAST
+    BROADCAST
 };
 
 class CacheBlock
 {
-private:
+protected:
     // flags
     bool dirty_;
     size_t tag_;

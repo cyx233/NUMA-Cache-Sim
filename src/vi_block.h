@@ -1,24 +1,15 @@
 #pragma once
 #include "cache_block.h"
 
-enum MOESI
-{
-    M,
-    O,
-    E,
-    S,
-    I
-};
-
-class MOESIBlock : public CacheBlock
+class VIBlock : public CacheBlock
 {
 private:
     Message updateState(bool is_write) override;
-    MOESI state_;
+    bool is_valid_ = false;
 
 public:
-    MOESIBlock();
-    virtual ~MOESIBlock() {}
+    VIBlock();
+    virtual ~VIBlock() {}
     virtual bool isValid() override;
     virtual Message writeBlock(int numa_node) override;
     virtual Message readBlock(int numa_node) override;
