@@ -1,10 +1,13 @@
 #pragma once
+#include <vector>
+#include <stddef.h>
 
 class Cache;
 class Directory;
 
 struct Addr;
-enum CacheMsg;
+enum class CacheMsg;
+enum class DirectoryMsg;
 
 // NUMA Node = Directory*1 + Processor(Cache)*N
 class NUMANode

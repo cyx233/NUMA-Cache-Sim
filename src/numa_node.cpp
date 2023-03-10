@@ -5,8 +5,8 @@ NUMANode::NUMANode(int node_id, int num_numa_nodes, int num_procs, Directory *di
     : node_id_(node_id),
       num_numa_nodes_(num_numa_nodes),
       num_procs_(num_procs),
-      caches_(caches),
       directory_(directory),
+      caches_(caches),
       cache_events_(0L),
       directory_events_(0L),
       global_events_(0L)

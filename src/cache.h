@@ -80,7 +80,7 @@ public:
 private:
     void performOperation(Addr address, bool is_write);
 
-    CacheBlock *readCache(size_t addr);
+    CacheBlock *findInCache(size_t addr);
     std::pair<size_t, size_t> splitAddr(size_t addr); // tag & set index
     CacheBlock *findInSet(size_t tag, size_t index);
 

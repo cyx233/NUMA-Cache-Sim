@@ -3,11 +3,9 @@
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
-#include "protocols.h"
 #include "cache.h"
 
 class NUMANode;
-
 
 enum class DirectoryState
 {
