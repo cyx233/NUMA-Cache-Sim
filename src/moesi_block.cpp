@@ -65,6 +65,7 @@ CacheMsg MOESIBlock::evictAndReplace(bool is_write, size_t tag, int new_node)
         }
         evictions_ += 1;
     }
+    dirty_ = is_write;
     tag_ = tag;
     node_id_ = new_node;
     state_ = MOESI::I;
