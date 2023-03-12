@@ -13,12 +13,13 @@ DirectoryLine *Directory::getLine(size_t addr)
   return it->second;
 }
 
-size_t Directory::getAddr(size_t addr) { return addr & ~((1L << block_offset_bits_) - 1L); }
+size_t Directory::getAddr(size_t address) { return address & ~((size_t)(1 << block_offset_bits_) - 1); }
 
 void Directory::assignToNode(NUMANode *node) { numa_node_ = node; }
 
-void Directory::receiveMsg(int cache_id, size_t addr, CacheMsg msg_type, bool is_dirty)
+void Directory::receiveMsg(int cache_id, size_t address, CacheMsg msg_type, bool is_dirty)
 {
+  size_t addr = getAddr(address);
   switch (msg_type)
   {
   case CacheMsg::BUSRD:
@@ -29,7 +30,6 @@ void Directory::receiveMsg(int cache_id, size_t addr, CacheMsg msg_type, bool is
     break;
   case CacheMsg::EVICTION:
     receiveEviction(cache_id, addr);
-    break;
     break;
   case CacheMsg::DATA:
     receiveData(cache_id, addr, is_dirty);
@@ -59,36 +59,32 @@ void Directory::invalidateSharers(DirectoryLine *line, int new_owner, size_t add
 void Directory::receiveData(int cache_id, size_t addr, bool is_dirty)
 {
   if (is_dirty)
-    getLine(getAddr(addr))->owner_ = cache_id;
+    getLine(addr)->owner_ = cache_id;
 }
 
-void Directory::receiveBroadcast(int cache_id, size_t address)
+void Directory::receiveBroadcast(int cache_id, size_t addr)
 {
   assert(protocol_ == Protocol::MOESI);
-  size_t addr = getAddr(address);
   DirectoryLine *line = getLine(addr);
   for (size_t i = 0; i < line->presence_.size(); ++i)
     if (line->presence_[i] && i != (size_t)cache_id)
       numa_node_->emitDirectoryMsg(i, addr, DirectoryMsg::READDATA);
 }
 
-void Directory::receiveEviction(int cache_id, size_t address)
+void Directory::receiveEviction(int cache_id, size_t addr)
 {
-  size_t addr = getAddr(address);
   DirectoryLine *line = getLine(addr);
 
   assert(line->presence_[cache_id]);
-  line->presence_[cache_id] = 0;
+  line->presence_[cache_id] = false;
 
   if (line->owner_ == cache_id)
     line->owner_ = -1;
 
-  int num_sharers = 0;
   switch (line->state_)
   {
   case DirectoryState::SO:
-    num_sharers = std::count(line->presence_.begin(), line->presence_.end(), true);
-    if (num_sharers == 0)
+    if (std::count(line->presence_.begin(), line->presence_.end(), true) == 0)
       line->state_ = DirectoryState::U;
     break;
   case DirectoryState::EM:
@@ -99,9 +95,8 @@ void Directory::receiveEviction(int cache_id, size_t address)
   }
 }
 
-void Directory::receiveBusRd(int cache_id, size_t address)
+void Directory::receiveBusRd(int cache_id, size_t addr)
 {
-  size_t addr = getAddr(address);
   DirectoryLine *line = getLine(addr);
 
   switch (line->state_)
@@ -109,32 +104,30 @@ void Directory::receiveBusRd(int cache_id, size_t address)
   case DirectoryState::U:
     memory_reads_++;
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA_EX);
-    line->presence_[cache_id] = true;
     line->owner_ = cache_id;
     line->state_ = protocol_ == Protocol::MSI ? DirectoryState::SO
                                               : DirectoryState::EM;
     break;
   case DirectoryState::SO:
-    if (line->owner_ != -1)
+    if (protocol_ == Protocol::MOESI && line->owner_ != -1)
       numa_node_->emitDirectoryMsg(line->owner_, addr, DirectoryMsg::FETCH, numa_node_->getID());
     else
+    {
       memory_reads_++;
+      line->owner_ = cache_id;
+    }
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA);
-    line->presence_[cache_id] = true;
     break;
   case DirectoryState::EM:
     numa_node_->emitDirectoryMsg(line->owner_, addr, DirectoryMsg::FETCH, numa_node_->getID());
-
-    line->presence_[cache_id] = true;
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA);
-
     line->state_ = DirectoryState::SO;
     break;
   }
+  line->presence_[cache_id] = true;
 }
-void Directory::receiveBusRdX(int cache_id, size_t address)
+void Directory::receiveBusRdX(int cache_id, size_t addr)
 {
-  size_t addr = getAddr(address);
   DirectoryLine *line = getLine(addr);
 
   switch (line->state_)
@@ -152,7 +145,6 @@ void Directory::receiveBusRdX(int cache_id, size_t address)
     int owner_id = line->owner_;
     numa_node_->emitDirectoryMsg(owner_id, addr, DirectoryMsg::FETCH, numa_node_->getID());
     numa_node_->emitDirectoryMsg(owner_id, addr, DirectoryMsg::INVALIDATE);
-
     line->presence_[owner_id] = false;
 
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::WRITEDATA);

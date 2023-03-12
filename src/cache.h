@@ -7,7 +7,7 @@
 
 #include "cache_block.h"
 #include "moesi_block.h"
-#include "vi_block.h"
+#include "msi_block.h"
 
 const int ADDR_LEN = 64;
 
@@ -40,10 +40,10 @@ struct Set
         {
             switch (proto)
             {
-            case Protocol::MOESI:
+            case Protocol::MSI:
+                blocks_.push_back(new MSIBlock());
                 break;
-            default:
-                blocks_.push_back(new VIBlock);
+            case Protocol::MOESI:
                 break;
             }
         }

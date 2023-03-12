@@ -42,7 +42,7 @@ CacheBlock *Cache::findInSet(size_t tag, size_t index)
     std::shared_ptr<Set> set = sets_[index];
 
     // run the entire loop here so we can increment last_used_ for all blocks
-    for (auto block : set->blocks_)
+    for (CacheBlock *block : set->blocks_)
     {
         block->incrLruCnt();
         if (block->isValid() && block->getTag() == tag)
@@ -131,7 +131,11 @@ void Cache::evictAndReplace(size_t tag, size_t index, Addr addr, bool is_write)
     }
 
     if ((*evict_block)->isValid())
-        numa_node_->emitCacheMsg(cache_id_, {addr.addr, (*evict_block)->getNodeID()}, CacheMsg::EVICTION);
+    {
+        size_t old_tag = (*evict_block)->getTag() << (index_len_ + offset_len_);
+        size_t set_mask = ((1 << index_len_) - 1) << offset_len_;
+        numa_node_->emitCacheMsg(cache_id_, {old_tag | (addr.addr & set_mask), (*evict_block)->getNodeID()}, CacheMsg::EVICTION);
+    }
     CacheMsg msg = (*evict_block)->evictAndReplace(is_write, tag, addr.node_id);
     numa_node_->emitCacheMsg(cache_id_, addr, msg);
 };

@@ -1,7 +1,7 @@
 #pragma once
 
 #include <algorithm>
-#include <unordered_map>
+#include <map>
 #include <vector>
 #include "cache.h"
 
@@ -63,7 +63,7 @@ private:
     int block_offset_bits_;
     Protocol protocol_;
     size_t memory_reads_;
-    std::unordered_map<size_t, DirectoryLine *> directory_;
+    std::map<size_t, DirectoryLine *> directory_;
 
     NUMANode *numa_node_;
 };

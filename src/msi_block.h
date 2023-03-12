@@ -1,15 +1,22 @@
 #pragma once
 #include "cache_block.h"
 
-class VIBlock : public CacheBlock
+enum class MSI
+{
+    M,
+    S,
+    I
+};
+
+class MSIBlock : public CacheBlock
 {
 private:
     CacheMsg updateState(bool is_write) override;
-    bool is_valid_ = false;
+    MSI state_;
 
 public:
-    VIBlock();
-    virtual ~VIBlock() {}
+    MSIBlock();
+    virtual ~MSIBlock() {}
     virtual bool isValid() override;
     virtual CacheMsg writeBlock(int numa_node) override;
     virtual CacheMsg readBlock(int numa_node) override;
