@@ -17,6 +17,12 @@ NUMANode::NUMANode(int node_id, int num_numa_nodes, int num_procs, Directory *di
     directory_->assignToNode(this);
     for (Cache *cache : caches_)
         cache->assignToNode(this);
+
+    if (node_id == 0)
+    {
+        std::cout << "Running simulation with cache settings:\n";
+        caches_[0]->printConfig();
+    }
 }
 NUMANode::~NUMANode()
 {
@@ -57,16 +63,18 @@ void NUMANode::printStats() const
     std::cout << "*** Interconnect Events ***\n"
               << "Cache Events:\t\t\t" << cache_events_ << "\n"
               << "Directory Events:\t\t" << directory_events_ << "\n"
-              << "Global Interconnect Events:\t" << global_events_ << "\n"
-              << "Local Interconnect Latency:\t"
+              << "Global Events:\t" << global_events_ << "\n"
+              << "Local Events Latency:\t"
               << outputLatency((cache_events_ + directory_events_) * LOCAL_INTERCONNECT_LATENCY)
               << "\n"
-              << "Global Interconnect Latency:\t"
+              << "Global Events Latency:\t"
               << outputLatency(global_events_ * GLOBAL_INTERCONNECT_LATENCY) << "\n";
     std::cout << std::endl;
 
     std::cout << "*** Memory Reads ***\n";
     std::cout << "Memory Reads:\t\t" << directory_->getMemoryReads() << "\n";
+    std::cout << "Memory Read Latency:\t"
+              << outputLatency(directory_->getMemoryReads() * MEMORY_LATENCY) << "\n";
     std::cout << std::endl;
 }
 

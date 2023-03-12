@@ -2,9 +2,8 @@
 #include <fstream>
 #include <iostream>
 
-#include "cache.h"
-#include "directory.h"
 #include "numa_node.h"
+#include "latencies.h"
 
 // returns the NUMA node proc is on
 int procToNode(int proc, int num_procs, int numa_nodes) { return proc / (num_procs / numa_nodes); }
@@ -47,13 +46,29 @@ void printAggregateStats(std::vector<NUMANode *> &nodes, int total_events)
 
   std::cout << "Interconnects" << std::endl
             << "-------------" << std::endl
-            << "Total Local events Events: \t" << stats.local_events_ << std::endl
-            << "Total Global events Events: \t" << stats.global_events_ << std::endl
+            << "Total Local Events: \t" << stats.local_events_ << std::endl
+            << "Total Global Events: \t" << stats.global_events_ << std::endl
             << std::endl;
 
   std::cout << "Memory" << std::endl
             << "------" << std::endl
             << "Total Memory Reads: \t" << stats.memory_reads_ << std::endl
+            << std::endl;
+
+  std::cout << "Latencies" << std::endl
+            << "---------" << std::endl
+            << "Cache Access Latency:\t\t" << outputLatency(stats.hits_ * CACHE_LATENCY) << "\n"
+            << "Memory Read Latency:\t\t" << outputLatency(stats.memory_reads_ * MEMORY_LATENCY)
+            << "\n"
+            << "Memory Write Latency:\t\t" << outputLatency(stats.memory_writes_ * MEMORY_LATENCY)
+            << "\n"
+            << "Memory Access Latency:\t\t"
+            << outputLatency((stats.memory_reads_ + stats.memory_writes_) * MEMORY_LATENCY) << "\n"
+            << "Local Events Latency:\t"
+            << outputLatency(stats.local_events_ * LOCAL_INTERCONNECT_LATENCY) << "\n"
+            << "Global Events Latency:\t"
+            << outputLatency(stats.local_events_ * GLOBAL_INTERCONNECT_LATENCY) << "\n"
+            << std::endl
             << std::endl;
 }
 
