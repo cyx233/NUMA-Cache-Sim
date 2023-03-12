@@ -1,5 +1,6 @@
 #include "numa_node.h"
 #include "directory.h"
+#include "latencies.h"
 
 NUMANode::NUMANode(int node_id, int num_numa_nodes, int num_procs, Directory *directory, std::vector<Cache *> caches)
     : node_id_(node_id),
@@ -52,11 +53,18 @@ void NUMANode::printStats() const
               << "\t-----------";
     for (Cache *cache : caches_)
         cache->printState();
+
     std::cout << "*** Interconnect Events ***\n"
               << "Cache Events:\t\t\t" << cache_events_ << "\n"
               << "Directory Events:\t\t" << directory_events_ << "\n"
-              << "Global Interconnect Events:\t" << global_events_ << "\n";
+              << "Global Interconnect Events:\t" << global_events_ << "\n"
+              << "Local Interconnect Latency:\t"
+              << outputLatency((cache_events_ + directory_events_) * LOCAL_INTERCONNECT_LATENCY)
+              << "\n"
+              << "Global Interconnect Latency:\t"
+              << outputLatency(global_events_ * GLOBAL_INTERCONNECT_LATENCY) << "\n";
     std::cout << std::endl;
+
     std::cout << "*** Memory Reads ***\n";
     std::cout << "Memory Reads:\t\t" << directory_->getMemoryReads() << "\n";
     std::cout << std::endl;

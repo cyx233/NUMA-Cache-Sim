@@ -5,7 +5,7 @@ DEPS =  cache_block.h moesi_block.h cache.h directory.h numa_node.h
 OBJDIR = build
 vpath %.h src
 vpath %.cpp src
-OBJ = $(addprefix $(OBJDIR)/, msi_block.o moesi_block.o cache.o directory.o numa_node.o)
+OBJ = $(addprefix $(OBJDIR)/, msi_block.o moesi_block.o cache.o directory.o numa_node.o latencies.o)
 
 # Default build rule
 .PHONY: all

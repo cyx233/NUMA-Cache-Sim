@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "numa_node.h"
+#include "latencies.h"
 
 Cache::Cache(int id, int index_len, int ways, int offset_len, Protocol protocol)
     : cache_id_(id),
@@ -176,5 +177,7 @@ void Cache::printState() const
               << "Evictions:\t\t" << stats.evictions_ << "\n"
               << "Dirty Evictions:\t" << stats.dirty_evictions_ << "\n"
               << "Invalidations:\t\t" << stats.invalidations_ << "\n"
+              << "Cache Access Latency:\t" << outputLatency(stats.hits_ * CACHE_LATENCY) << "\n"
+              << "Memory Write Latency:\t" << outputLatency(stats.memory_writes_ * MEMORY_LATENCY)
               << "\n\n";
 }
