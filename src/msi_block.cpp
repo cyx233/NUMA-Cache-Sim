@@ -1,5 +1,4 @@
 #include "msi_block.h"
-#include "cassert"
 
 MSIBlock::MSIBlock() : CacheBlock(),
                        state_(MSI::I){};

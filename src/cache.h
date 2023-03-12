@@ -3,7 +3,6 @@
 #include <iostream>
 #include <memory>
 #include <vector>
-#include <cassert>
 
 #include "cache_block.h"
 #include "moesi_block.h"
@@ -44,6 +43,7 @@ struct Set
                 blocks_.push_back(new MSIBlock());
                 break;
             case Protocol::MOESI:
+                blocks_.push_back(new MOESIBlock());
                 break;
             }
         }

@@ -129,7 +129,7 @@ int main(int argc, char **argv)
   usage += "-t <tracefile>: name of the trace file\n";
   usage += "-p <processors>: number of processors\n";
   usage += "-n <numa nodes>: number of NUMA nodes\n";
-  usage += "-m <VI | MSI | MOESI>: the cache protocol to use, default is MOESI\n";
+  usage += "-m <MSI | MOESI>: the cache protocol to use, default is MOESI\n";
   usage += "-s <s>: cache index bits (sets = 2^s)\n";
   usage += "-E <E>: cache associativity\n";
   usage += "-b <b>: cache offset bits (line size = 2^b)\n";
