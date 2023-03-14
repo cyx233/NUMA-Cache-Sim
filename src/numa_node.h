@@ -62,7 +62,7 @@ public:
     size_t getGlobalEvents() const { return global_events_; }
 
     int getID();
-    NodeStats getStats() const;
+    NodeStats getStats(bool skip0) const;
     void printStats() const;
 
 private:

@@ -21,14 +21,22 @@ void setupInterconnects(std::vector<NUMANode *> &nodes)
   }
 }
 
-void printAggregateStats(std::vector<NUMANode *> &nodes, int total_events)
+void printAggregateStats(std::vector<NUMANode *> &nodes, int total_events, bool skip0)
 {
   NodeStats stats;
   for (NUMANode *node : nodes)
   {
-    stats += node->getStats();
+    stats += node->getStats(skip0);
   }
-  std::cout << "\t** Aggregate Stats ***" << std::endl;
+
+  if (skip0)
+  {
+    std::cout << "\t** Aggregate Stats Without Processor 0 ***" << std::endl;
+  }
+  else
+  {
+    std::cout << "\t** Aggregate Stats ***" << std::endl;
+  }
 
   std::cout << std::endl
             << "Total Reads/Writes:\t\t" << total_events << std::endl
@@ -85,7 +93,7 @@ NUMANode *NewNumaNode(int num_procs, int num_nodes, int node_id, int index_len, 
   return new NUMANode(node_id, num_nodes, num_procs, dir, caches);
 }
 
-void runSimulation(int s, int E, int b, std::ifstream &trace, int procs, int numa_nodes, Protocol protocol, bool individual, bool aggregate)
+void runSimulation(int s, int E, int b, std::ifstream &trace, int procs, int numa_nodes, Protocol protocol, bool individual, bool aggregate, bool aggr_skip0)
 {
   std::vector<NUMANode *> nodes;
   for (int i = 0; i < numa_nodes; ++i)
@@ -96,6 +104,7 @@ void runSimulation(int s, int E, int b, std::ifstream &trace, int procs, int num
 
   setupInterconnects(nodes);
   int total_events = 0;
+  int total_events_skip0 = 0;
 
   int proc;    // the requesting proc
   char rw;     // whether it is a read or write
@@ -121,11 +130,20 @@ void runSimulation(int s, int E, int b, std::ifstream &trace, int procs, int num
       nodes[proc_node]->cacheWrite(proc, addr, node_id);
     }
     total_events++;
+    if (proc != 0)
+    {
+      total_events_skip0++;
+    }
   }
 
   if (aggregate)
   {
-    printAggregateStats(nodes, total_events);
+    printAggregateStats(nodes, total_events, false);
+  }
+
+  if (aggr_skip0)
+  {
+    printAggregateStats(nodes, total_events_skip0, true);
   }
 
   for (NUMANode *node : nodes)
@@ -149,6 +167,7 @@ int main(int argc, char **argv)
   usage += "-E <E>: cache associativity\n";
   usage += "-b <b>: cache offset bits (line size = 2^b)\n";
   usage += "-a: display aggregate stats\n";
+  usage += "-A: display aggregate stats without process 0\n";
   usage += "-i: display individual stats (i.e.per cache, per NUMA node)\n";
   usage += "-h: help\n";
 
@@ -163,6 +182,7 @@ int main(int argc, char **argv)
   int procs = 1;
   int numa_nodes = 1;
   bool aggregate = false;
+  bool aggr_skip0 = false;
   bool individual = false;
 
   // parse command line options
@@ -175,6 +195,9 @@ int main(int argc, char **argv)
       return 0;
     case 'a':
       aggregate = true;
+      break;
+    case 'A':
+      aggr_skip0 = true;
       break;
     case 'i':
       individual = true;
@@ -236,7 +259,7 @@ int main(int argc, char **argv)
   }
 
   // run the input trace on the cache
-  runSimulation(s, E, b, trace, procs, numa_nodes, prot, individual, aggregate);
+  runSimulation(s, E, b, trace, procs, numa_nodes, prot, individual, aggregate, aggr_skip0);
 
   trace.close();
 

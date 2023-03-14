@@ -42,11 +42,12 @@ void NUMANode::connectWith(NUMANode *node, int id)
 
 int NUMANode::getNode(int dest) { return dest / (num_procs_ / num_numa_nodes_); }
 
-NodeStats NUMANode::getStats() const
+NodeStats NUMANode::getStats(bool skip0) const
 {
     NodeStats stats;
     for (Cache *cache : caches_)
-        stats += cache->getStats();
+        if (!skip0 || cache->getID() != 0)
+            stats += cache->getStats();
     stats.memory_reads_ = directory_->getMemoryReads();
     stats.local_events_ = getLocalEvents();
     stats.global_events_ = getGlobalEvents();
