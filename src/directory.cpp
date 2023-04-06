@@ -105,7 +105,7 @@ void Directory::receiveBusRd(int cache_id, size_t addr)
   switch (line->state_)
   {
   case DirectoryState::U:
-    memory_reads_++;
+    memory_reads_ += 1;
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA_EX);
     line->owner_ = cache_id;
     line->state_ = protocol_ == Protocol::MSI ? DirectoryState::SO
@@ -115,7 +115,7 @@ void Directory::receiveBusRd(int cache_id, size_t addr)
     if (protocol_ == Protocol::MOESI && line->owner_ != -1)
       numa_node_->emitDirectoryMsg(line->owner_, addr, DirectoryMsg::FETCH, numa_node_->getID());
     else
-      memory_reads_++;
+      memory_reads_ += 1;
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::READDATA);
     break;
   case DirectoryState::EM:
@@ -134,12 +134,12 @@ void Directory::receiveBusRdX(int cache_id, size_t addr)
   switch (line->state_)
   {
   case DirectoryState::U:
-    memory_reads_++;
+    memory_reads_ += 1;
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::WRITEDATA);
     break;
   case DirectoryState::SO:
     invalidateSharers(line, cache_id, addr);
-    memory_reads_++;
+    memory_reads_ += 1;
     numa_node_->emitDirectoryMsg(cache_id, addr, DirectoryMsg::WRITEDATA);
     break;
   case DirectoryState::EM:

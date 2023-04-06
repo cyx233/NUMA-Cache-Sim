@@ -91,10 +91,12 @@ void NUMANode::cacheWrite(int proc, unsigned long addr, int numa_node)
 
 void NUMANode::emitCacheMsg(int src, Addr addr, CacheMsg msg_type, bool is_dirty)
 {
-    cache_events_++;
+    if (msg_type == CacheMsg::NOP)
+        return;
+    cache_events_ += 1;
     if (addr.node_id != node_id_)
     {
-        global_events_++;
+        global_events_ += 1;
         interconnects_[addr.node_id]->emitCacheMsg(src, addr, msg_type, is_dirty);
     }
     else
@@ -103,11 +105,11 @@ void NUMANode::emitCacheMsg(int src, Addr addr, CacheMsg msg_type, bool is_dirty
 
 void NUMANode::emitDirectoryMsg(int dst, size_t addr, DirectoryMsg msg, int request_node_id)
 {
-    directory_events_++;
+    directory_events_ += 1;
     int dst_node;
     if ((dst_node = getNode(dst)) != node_id_)
     {
-        global_events_++;
+        global_events_ += 1;
         interconnects_[dst_node]->emitDirectoryMsg(dst, addr, msg, request_node_id);
     }
     else

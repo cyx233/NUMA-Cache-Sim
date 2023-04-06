@@ -12,7 +12,7 @@ run_one_sim () {
     mkdir -p "$workdir/results/$prog"
     for protocol in ${protocols[@]}; do
         echo "Running sim on $prog with protocol $protocol and $threads threads"
-        $workdir/sim.out -t $workdir/traces/${prog}${threads}.trace -p ${threads} -n ${threads} -m ${protocol} -a -i > $workdir/results/${prog}/${prog}_${threads}_${protocol}.txt
+        $workdir/sim.out -t $workdir/traces/${prog}${threads}.trace -p ${threads} -n ${threads} -m ${protocol} -A -i > $workdir/results/${prog}/${prog}_${threads}_${protocol}.txt
     done
 }
 
